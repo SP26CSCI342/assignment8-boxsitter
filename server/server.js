@@ -17,7 +17,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://your-platescout.vercel.app",
+      "https://platescout-leyton.vercel.app/",
       /\.vercel\.app$/,
     ],
     credentials: true,
