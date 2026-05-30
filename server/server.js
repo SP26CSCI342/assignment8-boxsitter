@@ -1,5 +1,5 @@
 // server/server.js
-// Assignment 7 – Express backend for PlateScout.
+// Assignment 7: Express backend for PlateScout.
 // Mongoose + bcrypt + JWT replace the in-memory users array from Assignment 6.
 
 require("dotenv").config();
@@ -12,17 +12,26 @@ const jwt = require("jsonwebtoken");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ── Middleware ────────────────────────────────────────────────────────────────
-app.use(cors());
+// Middleware
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://your-platescout.vercel.app",
+      /\.vercel\.app$/,
+    ],
+    credentials: true,
+  })
+);
 app.use(express.json());
 
-// ── MongoDB connection ────────────────────────────────────────────────────────
+// MongoDB connection
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("Connected to MongoDB Atlas"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
-// ── User model ────────────────────────────────────────────────────────────────
+// User model
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true, trim: true, minlength: 3 },
   email:    { type: String, required: true, unique: true, lowercase: true, trim: true },
@@ -32,7 +41,7 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model("User", userSchema);
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// Helpers
 function validateInputs({ username, email, password }) {
   if (!username || username.trim().length < 3) {
     return "Username must be at least 3 characters.";
@@ -46,7 +55,7 @@ function validateInputs({ username, email, password }) {
   return "";
 }
 
-// ── POST /api/register ────────────────────────────────────────────────────────
+// POST /api/register
 app.post("/api/register", async (req, res) => {
   const { username, email, password } = req.body;
 
@@ -69,7 +78,7 @@ app.post("/api/register", async (req, res) => {
   });
 });
 
-// ── POST /api/login ───────────────────────────────────────────────────────────
+// POST /api/login
 app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
 
@@ -93,7 +102,7 @@ app.post("/api/login", async (req, res) => {
   });
 });
 
-// ── POST /api/logout ──────────────────────────────────────────────────────────
+// POST /api/logout
 app.post("/api/logout", (req, res) => {
   const authHeader = req.headers.authorization;
 
@@ -106,18 +115,27 @@ app.post("/api/logout", (req, res) => {
   try {
     jwt.verify(token, process.env.JWT_SECRET);
   } catch (err) {
-    // Accept expired tokens for logout — just log and continue.
+    // Accept expired tokens for logout; just log and continue.
     console.log("Logout called with expired/invalid token:", err.message);
   }
 
   return res.status(200).json({ message: "Logged out." });
 });
 
-// ── 404 fallback ──────────────────────────────────────────────────────────────
+// GET /api/health
+app.get("/api/health", (req, res) => {
+  return res.json({
+    status: "ok",
+    time: new Date().toISOString(),
+    mongo: mongoose.connection.readyState === 1,
+  });
+});
+
+// 404 fallback
 app.use((req, res) => {
   return res.status(404).json({ error: "Route not found." });
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Listening on ${PORT}`);
 });
