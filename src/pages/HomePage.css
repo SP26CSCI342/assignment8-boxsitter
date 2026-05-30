@@ -1,0 +1,4 @@
+/* HomePage styles */
+
+.HomePage-status         { text-align: center; margin: 2rem 0; }
+.HomePage-status--error  { color: crimson; }
